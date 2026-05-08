@@ -6,3 +6,7 @@ function translate(text) {
 
 let result = translate("Hello");
 console.log(result);
+function darkmode(){
+  document.body.style.background = "white";
+  document.body.style.color = "black";
+}
