@@ -1,245 +1,135 @@
-// ===== PREMIUM AI TRANSLATOR =====
+// ===== ADVANCED FUNNY AI REPLY BOT =====
+// main.js
 
-const inputText = document.getElementById("inputText");
-const resultText = document.getElementById("resultText");
-const fromLang = document.getElementById("fromLang");
-const toLang = document.getElementById("toLang");
-const translateBtn = document.getElementById("translateBtn");
-const bubble = document.getElementById("bubble");
+const readline = require("readline");
 
-// ===== TRANSLATE FUNCTION =====
+// ===== CUSTOM SETTINGS =====
+let botName = "MemeBot 😎";
+let ownerId = "second_id"; // control account name
 
-async function translateText() {
+// Custom replies you can edit anytime
+let customReplies = {
+  hi: [
+    "Hey 😏 Ki obostha?",
+    "Oho abar tumi 😂",
+    "Hello boss 🔥"
+  ],
 
-  const text = inputText.value.trim();
+  love: [
+    "Love detected 💖",
+    "Ami emotional hoye gelam 😭",
+    "Screenshot niye rakhlam 😎"
+  ],
 
-  if (!text) {
+  food: [
+    "Biryani chara life meaningless 🍗",
+    "Khabar er naam shunei happy 😋"
+  ],
 
-    resultText.innerHTML =
-      "⚠ Please type something...";
+  angry: [
+    "Rag komao 😭",
+    "Amake maro na pls 💀"
+  ]
+};
 
-    return;
-  }
+// ===== RANDOM REPLY =====
+const randomReplies = [
+  "Tomar vibe premium ✨",
+  "System confused 😵",
+  "Ami AI but emotional 😭",
+  "Eta ki flirting? 👀",
+  "Tumi dangerous 😂"
+];
 
-  resultText.innerHTML =
-    "⏳ Translating...";
+// ===== AI REPLY SYSTEM =====
+function generateReply(message, sender) {
 
-  let source = fromLang.value;
-  let target = toLang.value;
+  message = message.toLowerCase();
 
-  // ===== AUTO FIX =====
+  // OWNER CONTROL SYSTEM
+  if (sender === ownerId) {
 
-  if (source === "auto") {
-    source = "en";
-  }
+    // Add custom reply
+    if (message.startsWith("/add")) {
 
-  try {
+      // Example:
+      // /add hi Hello bro
 
-    // ===== LIBRE TRANSLATE API =====
+      const parts = message.split(" ");
 
-    const response = await fetch(
-      "https://libretranslate.de/translate",
-      {
-        method: "POST",
+      const keyword = parts[1];
+      const reply = parts.slice(2).join(" ");
 
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          q: text,
-          source: source,
-          target: target,
-          format: "text"
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    console.log(data);
-
-    // ===== RESULT =====
-
-    if (data.translatedText) {
-
-      const translated =
-        data.translatedText;
-
-      // typing animation
-      typeText(translated);
-
-      // voice speak
-      speakText(translated);
-
-      // vibration
-      if (navigator.vibrate) {
-        navigator.vibrate(100);
+      if (!customReplies[keyword]) {
+        customReplies[keyword] = [];
       }
 
-    } else {
+      customReplies[keyword].push(reply);
 
-      resultText.innerHTML =
-        "❌ Translation failed";
+      return `✅ Reply added for "${keyword}"`;
     }
 
-  } catch (error) {
-
-    console.log(error);
-
-    resultText.innerHTML =
-      "❌ API Error";
+    // Show all commands
+    if (message === "/help") {
+      return `
+COMMANDS:
+/add keyword reply
+Example:
+/add hi Hey bro 😎
+      `;
+    }
   }
-}
 
-// ===== TYPE EFFECT =====
+  // NORMAL AUTO REPLY
+  for (let keyword in customReplies) {
 
-function typeText(text) {
+    if (message.includes(keyword)) {
 
-  resultText.innerHTML = "";
+      let replies = customReplies[keyword];
 
-  let i = 0;
-
-  const typing = setInterval(() => {
-
-    resultText.innerHTML += text.charAt(i);
-
-    i++;
-
-    if (i >= text.length) {
-      clearInterval(typing);
+      return replies[
+        Math.floor(Math.random() * replies.length)
+      ];
     }
+  }
 
-  }, 25);
+  // Random fallback reply
+  return randomReplies[
+    Math.floor(Math.random() * randomReplies.length)
+  ];
 }
 
-// ===== SPEAK VOICE =====
-
-function speakText(text) {
-
-  // stop old voice
-  window.speechSynthesis.cancel();
-
-  const speech =
-    new SpeechSynthesisUtterance(text);
-
-  speech.lang = toLang.value;
-
-  speech.rate = 1;
-
-  speech.pitch = 1;
-
-  speech.volume = 1;
-
-  window.speechSynthesis.speak(speech);
-}
-
-// ===== BUTTON CLICK =====
-
-translateBtn.addEventListener(
-  "click",
-  translateText
-);
-
-// ===== FLOATING BUBBLE =====
-
-bubble.addEventListener("click", () => {
-
-  bubble.style.transform =
-    "scale(0.9)";
-
-  setTimeout(() => {
-
-    bubble.style.transform =
-      "scale(1)";
-
-  }, 150);
-
-  translateText();
+// ===== CHAT TEST SYSTEM =====
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
 });
 
-// ===== ENTER KEY =====
+console.log(`🤖 ${botName} Started...`);
+console.log(`Type: username: message`);
+console.log(`Example: user1: hi`);
+console.log(`Owner Example: second_id: /add hi Wassup 😎`);
 
-inputText.addEventListener(
-  "keydown",
-  (e) => {
+function askMessage() {
 
-    if (
-      e.key === "Enter" &&
-      !e.shiftKey
-    ) {
+  rl.question("> ", (input) => {
 
-      e.preventDefault();
-
-      translateText();
+    if (input === "exit") {
+      rl.close();
+      return;
     }
-  }
-);
 
-// ===== BUBBLE DRAG =====
+    const split = input.split(":");
 
-let isDragging = false;
+    const sender = split[0]?.trim();
+    const message = split.slice(1).join(":").trim();
 
-bubble.addEventListener(
-  "touchstart",
-  () => {
+    const reply = generateReply(message, sender);
 
-    isDragging = true;
-  }
-);
+    console.log(`${botName}: ${reply}`);
 
-bubble.addEventListener(
-  "touchmove",
-  (e) => {
-
-    if (!isDragging) return;
-
-    const x =
-      e.touches[0].clientX;
-
-    const y =
-      e.touches[0].clientY;
-
-    bubble.style.left =
-      `${x - 30}px`;
-
-    bubble.style.top =
-      `${y - 30}px`;
-  }
-);
-
-bubble.addEventListener(
-  "touchend",
-  () => {
-
-    isDragging = false;
-  }
-);
-
-// ===== AUTO THEME =====
-
-const hour =
-  new Date().getHours();
-
-if (hour >= 6 && hour < 18) {
-
-  document.body.style.background =
-    "linear-gradient(135deg,#0f172a,#1e293b)";
-
-} else {
-
-  document.body.style.background =
-    "linear-gradient(135deg,#020617,#050816)";
+    askMessage();
+  });
 }
 
-// ===== WELCOME =====
-
-window.onload = () => {
-
-  setTimeout(() => {
-
-    resultText.innerHTML =
-      "🌍 AI Translator Ready...";
-
-  }, 600);
-};
+askMessage();
