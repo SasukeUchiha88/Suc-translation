@@ -1,0 +1,10 @@
+{
+  "name": "funny-ai-bot",
+  "version": "1.0.0",
+  "description": "Funny Instagram Style AI Bot",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {}
+}
