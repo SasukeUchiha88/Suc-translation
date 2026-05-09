@@ -7,69 +7,72 @@ const toLang = document.getElementById("toLang");
 const translateBtn = document.getElementById("translateBtn");
 const bubble = document.getElementById("bubble");
 
-// ===== TRANSLATE =====
+// ===== TRANSLATE FUNCTION =====
 
 async function translateText() {
 
   const text = inputText.value.trim();
 
   if (!text) {
-    resultText.innerHTML = "⚠ Please type something...";
+
+    resultText.innerHTML =
+      "⚠ Please type something...";
+
     return;
   }
 
-  resultText.innerHTML = "⏳ Translating...";
+  resultText.innerHTML =
+    "⏳ Translating...";
 
   let source = fromLang.value;
   let target = toLang.value;
 
-  // ===== FIX AUTO =====
+  // ===== AUTO FIX =====
+
   if (source === "auto") {
     source = "en";
   }
 
   try {
 
+    // ===== LIBRE TRANSLATE API =====
+
     const response = await fetch(
-      `const response = await fetch(
-  "https://translate.argosopentech.com/translate",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      q: text,
-      source: source,
-      target: target,
-      format: "text"
-    })
-  }
-);
+      "https://libretranslate.de/translate",
+      {
+        method: "POST",
 
-const data = await response.json();
+        headers: {
+          "Content-Type": "application/json"
+        },
 
-const translated = data.translatedText;}`
+        body: JSON.stringify({
+          q: text,
+          source: source,
+          target: target,
+          format: "text"
+        })
+      }
     );
 
     const data = await response.json();
 
     console.log(data);
 
-    // ===== CHECK RESPONSE =====
-    if (
-      data &&
-      data.responseData &&
-      data.responseData.translatedText
-    ) {
+    // ===== RESULT =====
+
+    if (data.translatedText) {
 
       const translated =
-        data.responseData.translatedText;
+        data.translatedText;
 
+      // typing animation
       typeText(translated);
 
+      // voice speak
       speakText(translated);
 
+      // vibration
       if (navigator.vibrate) {
         navigator.vibrate(100);
       }
@@ -77,7 +80,7 @@ const translated = data.translatedText;}`
     } else {
 
       resultText.innerHTML =
-        "❌ Translation unavailable";
+        "❌ Translation failed";
     }
 
   } catch (error) {
@@ -110,10 +113,11 @@ function typeText(text) {
   }, 25);
 }
 
-// ===== VOICE =====
+// ===== SPEAK VOICE =====
 
 function speakText(text) {
 
+  // stop old voice
   window.speechSynthesis.cancel();
 
   const speech =
@@ -125,10 +129,12 @@ function speakText(text) {
 
   speech.pitch = 1;
 
+  speech.volume = 1;
+
   window.speechSynthesis.speak(speech);
 }
 
-// ===== BUTTON =====
+// ===== BUTTON CLICK =====
 
 translateBtn.addEventListener(
   "click",
@@ -139,22 +145,29 @@ translateBtn.addEventListener(
 
 bubble.addEventListener("click", () => {
 
-  bubble.style.transform = "scale(0.9)";
+  bubble.style.transform =
+    "scale(0.9)";
 
   setTimeout(() => {
-    bubble.style.transform = "scale(1)";
+
+    bubble.style.transform =
+      "scale(1)";
+
   }, 150);
 
   translateText();
 });
 
-// ===== ENTER =====
+// ===== ENTER KEY =====
 
 inputText.addEventListener(
   "keydown",
   (e) => {
 
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (
+      e.key === "Enter" &&
+      !e.shiftKey
+    ) {
 
       e.preventDefault();
 
@@ -163,33 +176,70 @@ inputText.addEventListener(
   }
 );
 
-// ===== DRAG BUBBLE =====
+// ===== BUBBLE DRAG =====
 
 let isDragging = false;
 
-bubble.addEventListener("touchstart", () => {
-  isDragging = true;
-});
+bubble.addEventListener(
+  "touchstart",
+  () => {
 
-bubble.addEventListener("touchmove", (e) => {
+    isDragging = true;
+  }
+);
 
-  if (!isDragging) return;
+bubble.addEventListener(
+  "touchmove",
+  (e) => {
 
-  const x = e.touches[0].clientX;
-  const y = e.touches[0].clientY;
+    if (!isDragging) return;
 
-  bubble.style.left = `${x - 30}px`;
-  bubble.style.top = `${y - 30}px`;
-});
+    const x =
+      e.touches[0].clientX;
 
-bubble.addEventListener("touchend", () => {
-  isDragging = false;
-});
+    const y =
+      e.touches[0].clientY;
+
+    bubble.style.left =
+      `${x - 30}px`;
+
+    bubble.style.top =
+      `${y - 30}px`;
+  }
+);
+
+bubble.addEventListener(
+  "touchend",
+  () => {
+
+    isDragging = false;
+  }
+);
+
+// ===== AUTO THEME =====
+
+const hour =
+  new Date().getHours();
+
+if (hour >= 6 && hour < 18) {
+
+  document.body.style.background =
+    "linear-gradient(135deg,#0f172a,#1e293b)";
+
+} else {
+
+  document.body.style.background =
+    "linear-gradient(135deg,#020617,#050816)";
+}
 
 // ===== WELCOME =====
 
 window.onload = () => {
 
-  resultText.innerHTML =
-    "🌍 AI Translator Ready...";
+  setTimeout(() => {
+
+    resultText.innerHTML =
+      "🌍 AI Translator Ready...";
+
+  }, 600);
 };
