@@ -1,261 +1,175 @@
-// Translation API configuration
-const API_CONFIG = {
-  baseURL: 'https://api.mymemory.translated.net/get',
-  timeout: 10000
-};
+// ===== PREMIUM AI TRANSLATOR =====
 
-// Debounce function to prevent excessive API calls
-function debounce(func, delay) {
-  let timeoutId;
-  return function (...args) {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => func(...args), delay);
-  };
-}
+const inputText = document.getElementById("inputText");
+const resultText = document.getElementById("resultText");
+const fromLang = document.getElementById("fromLang");
+const toLang = document.getElementById("toLang");
+const translateBtn = document.getElementById("translateBtn");
+const bubble = document.getElementById("bubble");
 
-// Show notification with auto-hide
-function showNotification(message, type = 'info') {
-  const notification = document.createElement('div');
-  notification.className = `notification notification-${type}`;
-  notification.textContent = message;
-  notification.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background-color: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
-    color: white;
-    padding: 16px 24px;
-    border-radius: 4px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 1000;
-    animation: slideIn 0.3s ease-in-out;
-  `;
-  
-  document.body.appendChild(notification);
-  
-  setTimeout(() => {
-    notification.style.animation = 'slideOut 0.3s ease-in-out';
-    setTimeout(() => notification.remove(), 300);
-  }, 3000);
-}
+// ===== Translate Function =====
 
-// Add animation styles
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes slideIn {
-    from {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-    to {
-      transform: translateX(0);
-      opacity: 1;
-    }
-  }
-  
-  @keyframes slideOut {
-    from {
-      transform: translateX(0);
-      opacity: 1;
-    }
-    to {
-      transform: translateX(400px);
-      opacity: 0;
-    }
-  }
-`;
-document.head.appendChild(style);
-
-// Main translation function with error handling
 async function translateText() {
+
+  const text = inputText.value.trim();
+
+  if (text === "") {
+    resultText.innerHTML = "⚠ Please type something...";
+    return;
+  }
+
+  resultText.innerHTML = "⏳ Translating...";
+
+  const url =
+    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang.value}|${toLang.value}`;
+
   try {
-    // Get DOM elements
-    const inputElement = document.getElementById('inputText');
-    const fromLangElement = document.getElementById('fromLang');
-    const toLangElement = document.getElementById('toLang');
-    const outputElement = document.getElementById('outputText');
-    const translateBtn = document.querySelector('[onclick="translateText()"]');
 
-    // Validate inputs
-    if (!inputElement || !fromLangElement || !toLangElement || !outputElement) {
-      showNotification('Error: Required HTML elements not found', 'error');
-      console.error('Missing required DOM elements');
-      return;
-    }
-
-    const text = inputElement.value.trim();
-    const from = fromLangElement.value;
-    const to = toLangElement.value;
-
-    // Input validation
-    if (!text) {
-      showNotification('Please enter text to translate', 'error');
-      return;
-    }
-
-    if (!from || !to) {
-      showNotification('Please select both languages', 'error');
-      return;
-    }
-
-    if (from === to) {
-      showNotification('Source and target languages must be different', 'error');
-      return;
-    }
-
-    // Disable button and show loading state
-    if (translateBtn) {
-      translateBtn.disabled = true;
-      translateBtn.textContent = 'Translating...';
-    }
-
-    outputElement.innerHTML = '<span style="color: #999;">Loading...</span>';
-
-    // Fetch translation with timeout
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
-
-    const response = await fetch(
-      `${API_CONFIG.baseURL}?q=${encodeURIComponent(text)}&langpair=${from}|${to}`,
-      { signal: controller.signal }
-    );
-
-    clearTimeout(timeoutId);
-
-    // Handle HTTP errors
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    const response = await fetch(url);
     const data = await response.json();
 
-    // Handle API response errors
-    if (data.responseStatus !== 200) {
-      throw new Error(data.responseDetails || 'Translation failed');
-    }
+    const translated =
+      data.responseData.translatedText;
 
-    // Handle empty translation
-    if (!data.responseData || !data.responseData.translatedText) {
-      showNotification('Could not translate the text. Please try again.', 'error');
-      outputElement.textContent = '';
-      return;
-    }
+    // Typing Animation
+    typeText(translated);
 
-    // Display translated text (use textContent for security)
-    outputElement.textContent = data.responseData.translatedText;
-    showNotification('Translation completed successfully', 'success');
+    // Voice Speak
+    speakText(translated);
 
-    // Log translation for debugging
-    console.log(`Translated from ${from} to ${to}: ${text.substring(0, 50)}...`);
-
-  } catch (error) {
-    // Handle different error types
-    if (error.name === 'AbortError') {
-      showNotification('Translation request timed out. Please try again.', 'error');
-    } else if (error instanceof TypeError) {
-      showNotification('Network error. Please check your connection.', 'error');
-    } else {
-      showNotification(`Error: ${error.message}`, 'error');
-    }
-    
-    console.error('Translation error:', error);
-    document.getElementById('outputText').textContent = '';
-
-  } finally {
-    // Re-enable button
-    const translateBtn = document.querySelector('[onclick="translateText()"]');
-    if (translateBtn) {
-      translateBtn.disabled = false;
-      translateBtn.textContent = 'Translate';
-    }
-  }
-}
-
-// Copy text with enhanced feedback
-async function copyText() {
-  try {
-    const outputElement = document.getElementById('outputText');
-    
-    if (!outputElement) {
-      showNotification('Error: Output element not found', 'error');
-      return;
-    }
-
-    const text = outputElement.textContent.trim();
-
-    if (!text) {
-      showNotification('Nothing to copy. Translate something first.', 'error');
-      return;
-    }
-
-    // Use modern Clipboard API
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(text);
-      showNotification('Copied to clipboard!', 'success');
-    } else {
-      // Fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      showNotification('Copied to clipboard!', 'success');
+    // Vibration
+    if (navigator.vibrate) {
+      navigator.vibrate(100);
     }
 
   } catch (error) {
-    showNotification('Failed to copy text', 'error');
-    console.error('Copy error:', error);
+
+    resultText.innerHTML =
+      "❌ Translation failed";
+
+    console.log(error);
   }
 }
 
-// Clear all fields
-function clearFields() {
-  try {
-    document.getElementById('inputText').value = '';
-    document.getElementById('outputText').textContent = '';
-    showNotification('Fields cleared', 'info');
-  } catch (error) {
-    console.error('Clear error:', error);
-  }
-}
+// ===== Typing Animation =====
 
-// Swap languages
-function swapLanguages() {
-  try {
-    const fromLang = document.getElementById('fromLang');
-    const toLang = document.getElementById('toLang');
+function typeText(text) {
 
-    if (!fromLang || !toLang) {
-      showNotification('Error: Language elements not found', 'error');
-      return;
+  resultText.innerHTML = "";
+
+  let i = 0;
+
+  const typing = setInterval(() => {
+
+    resultText.innerHTML += text.charAt(i);
+
+    i++;
+
+    if (i >= text.length) {
+      clearInterval(typing);
     }
 
-    const temp = fromLang.value;
-    fromLang.value = toLang.value;
-    toLang.value = temp;
-
-    showNotification('Languages swapped', 'info');
-  } catch (error) {
-    console.error('Swap error:', error);
-  }
+  }, 25);
 }
 
-// Auto-translate with debounce (optional feature)
-const debouncedTranslate = debounce(translateText, 500);
+// ===== Voice =====
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Translation app initialized');
-  
-  // Add enter key support for translation
-  const inputText = document.getElementById('inputText');
-  if (inputText) {
-    inputText.addEventListener('keypress', function(event) {
-      if (event.key === 'Enter' && event.ctrlKey) {
-        translateText();
-      }
-    });
-  }
+function speakText(text) {
+
+  const speech =
+    new SpeechSynthesisUtterance(text);
+
+  speech.lang = toLang.value;
+
+  speech.rate = 1;
+
+  speech.pitch = 1;
+
+  window.speechSynthesis.speak(speech);
+}
+
+// ===== Floating Bubble =====
+
+bubble.addEventListener("click", () => {
+
+  bubble.style.transform = "scale(0.9)";
+
+  setTimeout(() => {
+    bubble.style.transform = "scale(1)";
+  }, 150);
+
+  translateText();
 });
-  
+
+// ===== Button =====
+
+translateBtn.addEventListener(
+  "click",
+  translateText
+);
+
+// ===== Enter Key =====
+
+inputText.addEventListener(
+  "keydown",
+  (e) => {
+
+    if (e.key === "Enter" && !e.shiftKey) {
+
+      e.preventDefault();
+
+      translateText();
+    }
+  }
+);
+
+// ===== Auto Theme =====
+
+const hour = new Date().getHours();
+
+if (hour >= 6 && hour < 18) {
+
+  document.body.style.background =
+    "linear-gradient(135deg,#0f172a,#1e293b)";
+
+} else {
+
+  document.body.style.background =
+    "linear-gradient(135deg,#020617,#050816)";
+}
+
+// ===== Bubble Drag =====
+
+let isDragging = false;
+
+bubble.addEventListener("touchstart", () => {
+  isDragging = true;
+});
+
+bubble.addEventListener("touchmove", (e) => {
+
+  if (!isDragging) return;
+
+  const x = e.touches[0].clientX;
+  const y = e.touches[0].clientY;
+
+  bubble.style.left = `${x - 30}px`;
+  bubble.style.top = `${y - 30}px`;
+
+});
+
+bubble.addEventListener("touchend", () => {
+  isDragging = false;
+});
+
+// ===== Welcome =====
+
+window.onload = () => {
+
+  setTimeout(() => {
+
+    resultText.innerHTML =
+      "🌍 AI Translator Ready...";
+
+  }, 600);
+};
