@@ -1,17 +1,14 @@
-console.log("App Started");
+function darkmode(){
 
-function translate(text) {
-  return "Translated: " + text;
+document.body.style.background = "black";
+document.body.style.color = "white";
+
 }
 
-let result = translate("Hello");
-console.log(result);
-function darkmode(){
-  document.body.style.background = "white";
-  document.body.style.color = "black";
-}function translateText(){
+function translateText(){
 
-let text = document.getElementById("text").value;
+let text =
+document.getElementById("text").value;
 
 document.getElementById("result").innerHTML =
 "Translated: " + text;
