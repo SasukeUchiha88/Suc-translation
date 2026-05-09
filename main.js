@@ -31,7 +31,25 @@ async function translateText() {
   try {
 
     const response = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`
+      `const response = await fetch(
+  "https://translate.argosopentech.com/translate",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      q: text,
+      source: source,
+      target: target,
+      format: "text"
+    })
+  }
+);
+
+const data = await response.json();
+
+const translated = data.translatedText;}`
     );
 
     const data = await response.json();
