@@ -1,2 +1,5 @@
-# Suc-translation
-Translation karna hai to sac karo 
+# Funny AI Reply Bot 🤖
+
+## Run
+npm install
+npm start
