@@ -1,16 +1,33 @@
-function darkmode(){
+function translateText() {
 
-document.body.style.background = "black";
-document.body.style.color = "white";
+let text = document.getElementById("inputText").value;
+
+let from = document.getElementById("fromLang").value;
+
+let to = document.getElementById("toLang").value;
+
+let output = document.getElementById("outputText");
+
+output.innerHTML = "Loading...";
+
+fetch(`https://api.mymemory.translated.net/get?q=${text}&langpair=${from}|${to}`)
+
+.then(res => res.json())
+
+.then(data => {
+
+output.innerHTML = data.responseData.translatedText;
+
+});
 
 }
 
-function translateText(){
+function copyText() {
 
-let text =
-document.getElementById("text").value;
+let text = document.getElementById("outputText").innerText;
 
-document.getElementById("result").innerHTML =
-"Translated: " + text;
+navigator.clipboard.writeText(text);
+
+alert("Copied!");
 
 }
