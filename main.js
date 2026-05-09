@@ -1,50 +1,177 @@
+// ===== PREMIUM AI TRANSLATOR =====
+
+const inputText = document.getElementById("inputText");
+const resultText = document.getElementById("resultText");
+const fromLang = document.getElementById("fromLang");
+const toLang = document.getElementById("toLang");
+const translateBtn = document.getElementById("translateBtn");
+const bubble = document.getElementById("bubble");
+
+// ===== TRANSLATE =====
+
 async function translateText() {
 
   const text = inputText.value.trim();
 
-  if (text === "") {
+  if (!text) {
     resultText.innerHTML = "⚠ Please type something...";
     return;
   }
 
   resultText.innerHTML = "⏳ Translating...";
 
-  // ===== FIX AUTO LANGUAGE =====
-  let sourceLang = fromLang.value;
-  let targetLang = toLang.value;
+  let source = fromLang.value;
+  let target = toLang.value;
 
-  // MyMemory API auto support করে না
-  if (sourceLang === "auto") {
-    sourceLang = "en";
+  // ===== FIX AUTO =====
+  if (source === "auto") {
+    source = "en";
   }
-
-  const url =
-    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${sourceLang}|${targetLang}`;
 
   try {
 
-    const response = await fetch(url);
+    const response = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${source}|${target}`
+    );
+
     const data = await response.json();
 
-    const translated =
-      data.responseData.translatedText;
+    console.log(data);
 
-    // ===== Typing Animation =====
-    typeText(translated);
+    // ===== CHECK RESPONSE =====
+    if (
+      data &&
+      data.responseData &&
+      data.responseData.translatedText
+    ) {
 
-    // ===== Voice =====
-    speakText(translated);
+      const translated =
+        data.responseData.translatedText;
 
-    // ===== Vibration =====
-    if (navigator.vibrate) {
-      navigator.vibrate(100);
+      typeText(translated);
+
+      speakText(translated);
+
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+
+    } else {
+
+      resultText.innerHTML =
+        "❌ Translation unavailable";
     }
 
   } catch (error) {
 
-    resultText.innerHTML =
-      "❌ Translation failed";
-
     console.log(error);
+
+    resultText.innerHTML =
+      "❌ API Error";
   }
 }
+
+// ===== TYPE EFFECT =====
+
+function typeText(text) {
+
+  resultText.innerHTML = "";
+
+  let i = 0;
+
+  const typing = setInterval(() => {
+
+    resultText.innerHTML += text.charAt(i);
+
+    i++;
+
+    if (i >= text.length) {
+      clearInterval(typing);
+    }
+
+  }, 25);
+}
+
+// ===== VOICE =====
+
+function speakText(text) {
+
+  window.speechSynthesis.cancel();
+
+  const speech =
+    new SpeechSynthesisUtterance(text);
+
+  speech.lang = toLang.value;
+
+  speech.rate = 1;
+
+  speech.pitch = 1;
+
+  window.speechSynthesis.speak(speech);
+}
+
+// ===== BUTTON =====
+
+translateBtn.addEventListener(
+  "click",
+  translateText
+);
+
+// ===== FLOATING BUBBLE =====
+
+bubble.addEventListener("click", () => {
+
+  bubble.style.transform = "scale(0.9)";
+
+  setTimeout(() => {
+    bubble.style.transform = "scale(1)";
+  }, 150);
+
+  translateText();
+});
+
+// ===== ENTER =====
+
+inputText.addEventListener(
+  "keydown",
+  (e) => {
+
+    if (e.key === "Enter" && !e.shiftKey) {
+
+      e.preventDefault();
+
+      translateText();
+    }
+  }
+);
+
+// ===== DRAG BUBBLE =====
+
+let isDragging = false;
+
+bubble.addEventListener("touchstart", () => {
+  isDragging = true;
+});
+
+bubble.addEventListener("touchmove", (e) => {
+
+  if (!isDragging) return;
+
+  const x = e.touches[0].clientX;
+  const y = e.touches[0].clientY;
+
+  bubble.style.left = `${x - 30}px`;
+  bubble.style.top = `${y - 30}px`;
+});
+
+bubble.addEventListener("touchend", () => {
+  isDragging = false;
+});
+
+// ===== WELCOME =====
+
+window.onload = () => {
+
+  resultText.innerHTML =
+    "🌍 AI Translator Ready...";
+};
